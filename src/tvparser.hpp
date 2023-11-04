@@ -4,6 +4,7 @@
 #include <boost/asio/ssl.hpp>
 #include <boost/beast.hpp>
 #include <boost/beast/ssl.hpp>
+#include <boost/json.hpp>
 #include <string>
 #include <vector>
 
@@ -12,16 +13,23 @@ public:
   TVParser(const std::string &, const std::string &, const std::string &,
            const std::string &);
 
+  ~TVParser();
+
   std::vector<char> GetSymbolData(const std::string &);
+  void Read();
 
 private:
-  std::string GenRandomToken();
+  static std::string GenRandomToken();
 
   void Connect();
   void CloseConnection();
 
   void Write(const std::string &data);
-  void Read();
+
+  static void AddHeader(std::string &);
+  std::string PrepareMessage(const std::string &, const boost::json::array &);
+
+  std::vector<char> ReadParseData();
 
 private:
   std::string wsHost;
