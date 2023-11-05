@@ -5,7 +5,7 @@ set(CMAKE_CXX_STANDARD 17)
 
 set(CMAKE_BUILD_TYPE Debug)
 
-find_package(Boost 1.82 REQUIRED COMPONENTS json)
+find_package(Boost REQUIRED COMPONENTS json)
 
 if (Boost_FOUND)
     include_directories(${Boost_INCLUDE_DIRS})

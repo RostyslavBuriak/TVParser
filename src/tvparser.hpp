@@ -16,7 +16,7 @@ public:
   ~TVParser();
 
   std::vector<char> GetSymbolData(const std::string &);
-  void Read();
+  void Read(boost::beast::flat_buffer &);
 
 private:
   static std::string GenRandomToken();
@@ -36,7 +36,6 @@ private:
   std::string wsPort;
   std::string wsOrigin;
   std::string wsPath;
-  boost::beast::flat_buffer dataBuffer;
   boost::asio::io_context iocWS;
   boost::asio::ssl::context ctxWS;
   boost::asio::ip::tcp::resolver resolverWS;
