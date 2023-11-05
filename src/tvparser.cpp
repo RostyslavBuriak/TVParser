@@ -1,11 +1,16 @@
 #include "tvparser.hpp"
+#include <algorithm>
 #include <boost/json.hpp>
+#include <boost/property_tree/json_parser.hpp>
+#include <boost/property_tree/ptree.hpp>
 #include <iostream>
 #include <random>
+#include <regex>
 #include <string>
 #include <vector>
 
 #define TOKEN_LENGTH 12
+#define READ_NUM 3
 
 TVParser::TVParser(const std::string &host, const std::string &port,
                    const std::string &origin, const std::string &path)
@@ -89,50 +94,75 @@ void TVParser::Write(const std::string &data) {
   websocket.write(boost::asio::buffer(data));
 }
 
-void TVParser::Read() { websocket.read(dataBuffer); }
+void TVParser::Read(boost::beast::flat_buffer &dataBuffer) {
+  websocket.read(dataBuffer);
+}
 
-std::vector<char> TVParser::ReadParseData() { return {}; }
+std::vector<char> TVParser::ReadParseData() {
+
+  std::vector<char> parsedData;
+
+  try {
+    std::regex errPattern("error");
+    std::regex lenPattern("~m~(\\d+)~m~");
+    std::regex msgPattern("\"m\":\"([a-zA-Z0-9_]+)\"");
+
+    auto n = READ_NUM;
+    while (n--) {
+      boost::beast::flat_buffer dataBuffer;
+      Read(dataBuffer);
+      auto cData = static_cast<char *>(dataBuffer.data().data());
+      auto size = dataBuffer.data().size();
+
+      if (std::regex_search(cData, cData + size, errPattern)) {
+        std::cout << "Error occured: " << std::string(cData, size) << std::endl;
+        return {};
+      }
+
+      std::cmatch lenMatch;
+
+      while (std::regex_search(cData, cData + size, lenMatch, lenPattern)) {
+        auto match = lenMatch[1].first;
+        auto number = std::stoull(match);
+        auto pos = lenMatch[0].second - cData;
+
+        cData += pos;
+
+        if (size >= number + pos) {
+          std::cmatch msgMatch;
+
+          if (std::regex_search(cData, cData + number, msgMatch, msgPattern)) {
+            if (msgMatch[1] == "timescale_update") {
+              parsedData.resize(number);
+              std::memcpy(parsedData.data(), cData, number);
+              return parsedData;
+            }
+          }
+        } else {
+          std::cout << "Data is corrupted\n";
+          return {};
+        }
+
+        cData += number;
+      }
+    }
+  } catch (...) {
+    return {};
+  }
+
+  return parsedData;
+}
 
 std::vector<char> TVParser::GetSymbolData(const std::string &symbol) {
 
   auto const sessionToken = "qs_" + GenRandomToken();
   auto const chartToken = "cs_" + GenRandomToken();
 
-  const static boost::json::array fieldsMsg{"ch",
-                                            "chp",
-                                            "current_session",
-                                            "description",
-                                            "local_description",
-                                            "language",
-                                            "exchange",
-                                            "fractional",
-                                            "is_tradable",
-                                            "lp",
-                                            "lp_time",
-                                            "minmov",
-                                            "minmove2",
-                                            "original_name",
-                                            "pricescale",
-                                            "pro_name",
-                                            "short_name",
-                                            "type",
-                                            "update_mode",
-                                            "volume",
-                                            "currency_code",
-                                            "rchp",
-                                            "rtc"};
-
   Connect();
 
   if (!websocket.is_open()) {
     return {};
   }
-
-  boost::json::array sessionFieldsMsg;
-  sessionFieldsMsg.reserve(fieldsMsg.size() + 1);
-  sessionFieldsMsg.emplace_back(sessionToken);
-  sessionFieldsMsg.insert(sessionFieldsMsg.end(), fieldsMsg.begin(),
-                          fieldsMsg.end());
 
   const boost::json::object flagsObj{
       {"flags", boost::json::array{"force_permission"}}};
@@ -141,31 +171,28 @@ std::vector<char> TVParser::GetSymbolData(const std::string &symbol) {
       PrepareMessage("set_auth_token", {"unauthorized_user_token"});
   const auto chartCreateSessionMsg =
       PrepareMessage("chart_create_session", {chartToken, ""});
-
   const auto quoteCreateSessionMsg =
       PrepareMessage("quote_create_session", {sessionToken});
-  const auto quoteSetFieldsMsg =
-      PrepareMessage("quote_set_fields", sessionFieldsMsg);
   const auto quoteAddSymbolsMsg =
       PrepareMessage("quote_add_symbols", {sessionToken, symbol});
   const auto quoteFastSymbolsMsg =
       PrepareMessage("quote_fast_symbols", {sessionToken, symbol});
   const auto resolveSymbolsMsg =
-      PrepareMessage("resolve_symbol",
-                     {chartToken, "symbol_1",
-                      R"(={"symbol":")" + symbol +
-                          R"(","adjustment":"splits","session":"extended"})"});
+      PrepareMessage("resolve_symbol", {chartToken, "symbol_1",
+                                        R"(={"symbol":")" + symbol + "\"}"});
   const auto createSeriesSymbolMsg = PrepareMessage(
       "create_series", {chartToken, "s1", "s1", "symbol_1", "1", 5000});
 
-  Write(setAuthTokenMsg);
-  Write(chartCreateSessionMsg);
-  Write(quoteCreateSessionMsg);
-  Write(quoteSetFieldsMsg);
-  Write(quoteAddSymbolsMsg);
-  Write(quoteFastSymbolsMsg);
-  Write(resolveSymbolsMsg);
-  Write(createSeriesSymbolMsg);
+  try {
+    Write(setAuthTokenMsg);
+    Write(chartCreateSessionMsg);
+    Write(quoteCreateSessionMsg);
+    Write(quoteAddSymbolsMsg);
+    Write(resolveSymbolsMsg);
+    Write(createSeriesSymbolMsg);
+  } catch (...) {
+    return {};
+  }
 
   return ReadParseData();
 }
