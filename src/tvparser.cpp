@@ -1,8 +1,6 @@
 #include "tvparser.hpp"
 #include <algorithm>
 #include <boost/json.hpp>
-#include <boost/property_tree/json_parser.hpp>
-#include <boost/property_tree/ptree.hpp>
 #include <iostream>
 #include <random>
 #include <regex>
@@ -25,7 +23,7 @@ std::string TVParser::GenRandomToken() {
 
   std::string token;
 
-  for (auto i = 0; i < 12; ++i) {
+  for (auto i = 0; i < TOKEN_LENGTH; ++i) {
     token.push_back('a' + dis(gen));
   }
 
@@ -163,9 +161,6 @@ std::vector<char> TVParser::GetSymbolData(const std::string &symbol) {
   if (!websocket.is_open()) {
     return {};
   }
-
-  const boost::json::object flagsObj{
-      {"flags", boost::json::array{"force_permission"}}};
 
   const auto setAuthTokenMsg =
       PrepareMessage("set_auth_token", {"unauthorized_user_token"});
