@@ -103,9 +103,9 @@ void TVParser::Read(boost::beast::flat_buffer &dataBuffer) {
   websocket.read(dataBuffer);
 }
 
-std::vector<char> TVParser::ReadParseData() {
+std::string TVParser::ReadParseData() {
 
-  std::vector<char> parsedData;
+  std::string parsedData;
 
   try {
     std::regex errPattern("error");
@@ -138,8 +138,7 @@ std::vector<char> TVParser::ReadParseData() {
 
           if (std::regex_search(cData, cData + number, msgMatch, msgPattern)) {
             if (msgMatch[1] == "timescale_update") {
-              parsedData.resize(number);
-              std::memcpy(parsedData.data(), cData, number);
+              parsedData = std::string(cData, number);
               return parsedData;
             }
           }
@@ -158,17 +157,28 @@ std::vector<char> TVParser::ReadParseData() {
   return parsedData;
 }
 
-std::vector<char> TVParser::GetSymbolData(const std::string &symbol,
-                                          const TimeRange range) {
+std::string TVParser::GetSymbolDataJson(const std::string &symbol,
+                                        const TimeRange range) {
+  return FetchSymbolData(symbol, range);
+}
 
-  const auto sessionToken = "qs_" + GenRandomToken();
-  const auto chartToken = "cs_" + GenRandomToken();
+std::string TVParser::GetSymbolDataCSV(const std::string &symbol,
+                                       const TimeRange range) {
+  auto jsonData = FetchSymbolData(symbol, range);
 
+  return JsonToCSV(jsonData);
+}
+
+std::string TVParser::FetchSymbolData(const std::string &symbol,
+                                      const TimeRange range) {
   Connect();
 
   if (!websocket.is_open()) {
     return {};
   }
+
+  const auto sessionToken = "qs_" + GenRandomToken();
+  const auto chartToken = "cs_" + GenRandomToken();
 
   const auto setAuthTokenMsg =
       PrepareMessage("set_auth_token", {"unauthorized_user_token"});
@@ -199,4 +209,36 @@ std::vector<char> TVParser::GetSymbolData(const std::string &symbol,
   }
 
   return ReadParseData();
+}
+
+std::string TVParser::JsonToCSV(const std::string &jsonData) {
+  std::string rString;
+  try {
+    auto root = boost::json::parse(jsonData);
+
+    const auto &array = root.at("p")
+                            .as_array()
+                            .at(1)
+                            .as_object()
+                            .at("sds_1")
+                            .as_object()
+                            .at("s")
+                            .as_array();
+
+    rString.reserve(array.size() *
+                    array.at(0).as_object().at("v").as_array().size());
+
+    for (const auto &sample : array) {
+      for (const auto &col : sample.as_object().at("v").as_array()) {
+        rString += std::to_string(col.as_double()) + ",";
+      }
+      rString.pop_back();
+      rString.push_back('\n');
+    }
+  } catch (...) {
+    std::cout << "Json to CSV parsing error occurred." << std::endl;
+    return rString;
+  }
+
+  return rString;
 }

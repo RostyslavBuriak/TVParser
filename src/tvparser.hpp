@@ -46,7 +46,8 @@ public:
   TVParser &operator=(const TVParser &) = delete;
   TVParser &operator=(TVParser &&) = delete;
 
-  std::vector<char> GetSymbolData(const std::string &, const TimeRange);
+  std::string GetSymbolDataJson(const std::string &, const TimeRange);
+  std::string GetSymbolDataCSV(const std::string &, const TimeRange);
 
 private:
   static std::string GenRandomToken();
@@ -58,9 +59,13 @@ private:
   void Read(boost::beast::flat_buffer &);
 
   static void AddHeader(std::string &);
-  std::string PrepareMessage(const std::string &, const boost::json::array &);
+  static std::string PrepareMessage(const std::string &,
+                                    const boost::json::array &);
 
-  std::vector<char> ReadParseData();
+  static std::string JsonToCSV(const std::string &);
+
+  std::string FetchSymbolData(const std::string &, const TimeRange);
+  std::string ReadParseData();
 
 private:
   static const std::map<TimeRange, std::string> timeRangeToStringMap;
