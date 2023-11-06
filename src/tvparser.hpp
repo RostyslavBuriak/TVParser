@@ -46,8 +46,8 @@ public:
   TVParser &operator=(const TVParser &) = delete;
   TVParser &operator=(TVParser &&) = delete;
 
-  std::string GetSymbolDataJson(const std::string &, const TimeRange);
-  std::string GetSymbolDataCSV(const std::string &, const TimeRange);
+  std::string GetSymbolDataJson(const std::string &, TimeRange);
+  std::string GetSymbolDataCSV(const std::string &, TimeRange);
 
 private:
   static std::string GenRandomToken();
@@ -64,7 +64,7 @@ private:
 
   static std::string JsonToCSV(const std::string &);
 
-  std::string FetchSymbolData(const std::string &, const TimeRange);
+  std::string FetchSymbolData(const std::string &, TimeRange);
   std::string ReadParseData();
 
 private:

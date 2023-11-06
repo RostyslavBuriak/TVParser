@@ -8,7 +8,6 @@
 #include <vector>
 
 #define TOKEN_LENGTH 12
-#define READ_NUM 3
 
 const std::map<TimeRange, std::string> TVParser::timeRangeToStringMap = {
     {TimeRange::m_1, "1"},   {TimeRange::m_3, "3"},   {TimeRange::m_5, "5"},
@@ -40,6 +39,9 @@ std::string TVParser::GenRandomToken() {
 TVParser::~TVParser() { CloseConnection(); }
 
 void TVParser::Connect() {
+  if (websocket.is_open()) {
+    return;
+  }
   if (!SSL_set_tlsext_host_name(websocket.next_layer().native_handle(),
                                 wsHost.c_str())) {
     return;
@@ -112,8 +114,7 @@ std::string TVParser::ReadParseData() {
     std::regex lenPattern("~m~(\\d+)~m~");
     std::regex msgPattern("\"m\":\"([a-zA-Z0-9_]+)\"");
 
-    auto n = READ_NUM;
-    while (n--) {
+    while (true) {
       boost::beast::flat_buffer dataBuffer;
       Read(dataBuffer);
       auto cData = static_cast<char *>(dataBuffer.data().data());

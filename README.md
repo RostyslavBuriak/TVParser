@@ -22,17 +22,23 @@ To use TVParser, you can include the "tvparser.hpp" header and follow this sampl
 #include <fstream>
 
 int main() {
-  // Create an instance of TVParser with WebSocket and endpoint configuration.
-  // All defines are defined in tvparser.hpp file
-  TVParser parser(TRADINGVIEW_WS, WSS_PORT, TRADINGVIEW_ORIGIN, TRADINGVIEW_WS_ENDPOINT);
+    // Create an instance of TVParser with WebSocket and endpoint configuration.
+    // All defines are defined in tvparser.hpp file
+    TVParser parser(TRADINGVIEW_WS, WSS_PORT, TRADINGVIEW_ORIGIN, TRADINGVIEW_WS_ENDPOINT);
 
-  // Get OHLC data for the "BTCUSD" symbol with a time range of 1 minute.
-  auto v = parser.GetSymbolData("BTCUSD", TimeRange::m_1);
+    // Get OHLC data for the "BTCUSD" symbol with a time range of 1 minute.
+    auto json = parser.GetSymbolDataJson("BTCUSD", TimeRange::m_1);
+    auto csv = parser.GetSymbolDataCSV("BTCUSD", TimeRange::m_1);
 
-  // Write the retrieved data to a JSON file named "data.json".
-  std::ofstream s("data.json");
-  s.write(v.data(), v.size());
-  s.close();
+    // Write the retrieved data to a JSON file named "data.json".
+    std::ofstream jsonFile("data.json");
+    jsonFile.write(json.data(), json.size());
+    jsonFile.close();
 
-  return 0;
+    // Write the retrieved data to a CSV file named "data.csv".
+    std::ofstream csvFile("data.csv");
+    csvFile.write(csv.data(), csv.size());
+    csvFile.close();
+
+    return 0;
 }
