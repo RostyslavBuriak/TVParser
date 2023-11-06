@@ -10,6 +10,13 @@
 #define TOKEN_LENGTH 12
 #define READ_NUM 3
 
+const std::map<TimeRange, std::string> TVParser::timeRangeToStringMap = {
+    {TimeRange::m_1, "1"},   {TimeRange::m_3, "3"},   {TimeRange::m_5, "5"},
+    {TimeRange::m_15, "15"}, {TimeRange::m_30, "30"}, {TimeRange::m_45, "45"},
+    {TimeRange::H_1, "60"},  {TimeRange::H_2, "120"}, {TimeRange::H_3, "180"},
+    {TimeRange::H_4, "240"}, {TimeRange::D_1, "1D"},  {TimeRange::W_1, "1W"},
+    {TimeRange::M_1, "1M"},  {TimeRange::M_3, "3M"},  {TimeRange::M_12, "12M"}};
+
 TVParser::TVParser(const std::string &host, const std::string &port,
                    const std::string &origin, const std::string &path)
     : wsHost(host), wsPort(port), wsOrigin(origin), wsPath(path),
@@ -151,10 +158,11 @@ std::vector<char> TVParser::ReadParseData() {
   return parsedData;
 }
 
-std::vector<char> TVParser::GetSymbolData(const std::string &symbol) {
+std::vector<char> TVParser::GetSymbolData(const std::string &symbol,
+                                          const TimeRange range) {
 
-  auto const sessionToken = "qs_" + GenRandomToken();
-  auto const chartToken = "cs_" + GenRandomToken();
+  const auto sessionToken = "qs_" + GenRandomToken();
+  const auto chartToken = "cs_" + GenRandomToken();
 
   Connect();
 
@@ -175,8 +183,9 @@ std::vector<char> TVParser::GetSymbolData(const std::string &symbol) {
   const auto resolveSymbolsMsg =
       PrepareMessage("resolve_symbol", {chartToken, "symbol_1",
                                         R"(={"symbol":")" + symbol + "\"}"});
-  const auto createSeriesSymbolMsg = PrepareMessage(
-      "create_series", {chartToken, "s1", "s1", "symbol_1", "1", 5000});
+  const auto createSeriesSymbolMsg =
+      PrepareMessage("create_series", {chartToken, "sds_1", "s1", "symbol_1",
+                                       timeRangeToStringMap.at(range), 5000});
 
   try {
     Write(setAuthTokenMsg);

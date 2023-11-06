@@ -3,8 +3,6 @@ project(tvparser)
 
 set(CMAKE_CXX_STANDARD 17)
 
-set(CMAKE_BUILD_TYPE Debug)
-
 find_package(Boost REQUIRED COMPONENTS json)
 
 if (Boost_FOUND)
@@ -26,4 +24,4 @@ add_executable(tvparser
 )
 
 target_include_directories(tvparser PRIVATE ${Boost_INCLUDE_DIRS} ${OPENSSL_INCLUDE_DIR})
-target_link_libraries(tvparser PRIVATE ${Boost_LIBRARIES} ${OPENSSL_LIBRARIES} Threads::Threads Boost::json)
+target_link_libraries(tvparser PRIVATE ${Boost_LIBRARIES} ${OPENSSL_LIBRARIES} Boost::json)
