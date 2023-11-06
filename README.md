@@ -10,7 +10,7 @@ TVParser is a tool for parsing TradingView chart data to retrieve the last 5000 
 
 ## Features
 
-- Parses and retrieves JSON OHLC data for a given symbol.
+- Parses and retrieves JSON/CSV OHLC data for a given symbol.
 - Works with the last 5000 ticks of trading data.
 
 ## Sample Usage
