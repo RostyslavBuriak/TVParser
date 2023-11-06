@@ -19,8 +19,8 @@ set (THREADS_PREFER_PTHREAD_FLAG ON)
 find_package (Threads REQUIRED)
 
 add_executable(tvparser
-  tvparser.cpp
-  tvparser.hpp
+  src/tvparser.cpp
+  src/tvparser.hpp
 )
 
 target_include_directories(tvparser PRIVATE ${Boost_INCLUDE_DIRS} ${OPENSSL_INCLUDE_DIR})
