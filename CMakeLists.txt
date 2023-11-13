@@ -21,6 +21,7 @@ find_package (Threads REQUIRED)
 add_executable(tvparser
   src/tvparser.cpp
   src/tvparser.hpp
+  src/main.cpp
 )
 
 target_include_directories(tvparser PRIVATE ${Boost_INCLUDE_DIRS} ${OPENSSL_INCLUDE_DIR})

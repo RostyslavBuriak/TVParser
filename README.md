@@ -42,3 +42,12 @@ int main() {
 
     return 0;
 }
+```
+
+Or you can build it with cmake and use it from cmd, passing arguments to it:
+
+./tvparser -s <symbolname> -t <filetype> -o <outputfilename>
+
+Example:
+
+./tvparser -s XAUUSD -t csv -o XAUUSD

@@ -1,6 +1,7 @@
 #include "tvparser.hpp"
 #include <algorithm>
 #include <boost/json.hpp>
+#include <cassert>
 #include <iostream>
 #include <random>
 #include <regex>
@@ -213,6 +214,7 @@ std::string TVParser::FetchSymbolData(const std::string &symbol,
 }
 
 std::string TVParser::JsonToCSV(const std::string &jsonData) {
+  assert(!jsonData.empty());
   std::string rString;
   try {
     auto root = boost::json::parse(jsonData);
@@ -228,6 +230,8 @@ std::string TVParser::JsonToCSV(const std::string &jsonData) {
 
     rString.reserve(array.size() *
                     array.at(0).as_object().at("v").as_array().size());
+
+    rString += "Timestamp, Open, High, Low, Close, Volume\n";
 
     for (const auto &sample : array) {
       for (const auto &col : sample.as_object().at("v").as_array()) {
