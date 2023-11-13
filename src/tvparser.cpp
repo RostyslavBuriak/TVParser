@@ -231,7 +231,7 @@ std::string TVParser::JsonToCSV(const std::string &jsonData) {
     rString.reserve(array.size() *
                     array.at(0).as_object().at("v").as_array().size());
 
-    rString += "Timestamp, Open, High, Low, Close, Volume\n";
+    rString += "Timestamp,Open,High,Low,Close,Volume\n";
 
     for (const auto &sample : array) {
       for (const auto &col : sample.as_object().at("v").as_array()) {
