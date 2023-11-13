@@ -46,7 +46,7 @@ int main() {
 
 Or you can build it with cmake and use it from cmd, passing arguments to it:
 
-./tvparser -s <symbolname> -t <filetype> -o <outputfilename>
+./tvparser -s \<symbolname\> -t \<filetype\> -o \<outputfilename\>
 
 Example:
 
